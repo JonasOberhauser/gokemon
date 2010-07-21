@@ -224,7 +224,7 @@ func (c *testcreature) GetPowers() [4]Power {
 }
 func (c *testcreature) SetPower(id int, p Power) bool {
 	if id >= 0 && id <= 3 {
-		if c.powers[id].Unlearnable() {
+		if c.powers[id] == nil || c.powers[id].Unlearnable() {
 			c.powers[id] = p
 			return true
 		}

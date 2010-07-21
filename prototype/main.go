@@ -1,11 +1,11 @@
 package main
 
 import (
-	"curses"
-        "fmt"
+	"fmt"
 	"time"
 	"strings"
 	"rand"
+	"char"
 )
 
 var (
@@ -26,11 +26,10 @@ type World interface {
 
 	InCombat() bool
 	InField() bool
-        
 }
 
 type world struct {
-	a Arena
+	a                Arena
 	pausedC, pausedF bool
 }
 
@@ -48,29 +47,29 @@ func (w *world) PauseCombat(b bool) {
 	if b && (!w.pausedC) {
 		select {
 		case mainCIn <- true:
-                        w.pausedC = true 
+			w.pausedC = true
 		}
 	} else if !b && w.pausedC {
 		select {
 		case <-mainCOut:
-                        w.pausedC = false 
+			w.pausedC = false
 		}
 	}
 }
 
 func (w *world) PausedCombat() bool {
-        return w.pausedC
+	return w.pausedC
 }
 func (w *world) PausedField() bool {
-        return true
+	return true
 }
 
 func (w *world) InCombat() bool {
-        return true 
+	return true
 }
 
 func (w *world) InField() bool {
-        return false
+	return false
 }
 
 var MainWorld = NewWorld()
@@ -78,9 +77,9 @@ var MainWorld = NewWorld()
 func mainloop() {
 	for {
 		select {
-                case <-mainCIn:
-                        mainCOut <- true
-                        
+		case <-mainCIn:
+			mainCOut <- true
+
 		default:
 			time.Sleep(mainP)
 			mainQueue.Update(int64(float(mainP) * GAME_SPEED_MOD))
@@ -90,122 +89,129 @@ func mainloop() {
 }
 
 
-
 var (
-        Whole = "%-43s\n%-43s\n%-43s\n%-43s\n\n\n\n\n\n\n\n%43s\n%43s\n%43s\n%43s\n%43s\n"
-        Bar = "-------------------------"
-        Name = fmt.Sprintf( "%-19s", " %-10s L%3d" )
-        Hp = "  HP %18s "
-        Ap = "  AP %18s "
-        Ep = "  EP %18s "
-        //       012345678901234567
-        HpVal = " %3d/%3d"
+	Whole = "%-43s\n%-43s\n%-43s\n%-43s\n\n\n\n\n\n\n\n%43s\n%43s\n%43s\n%43s\n%43s\n"
+	Bar   = "-------------------------"
+	Name  = fmt.Sprintf("%-19s", " %-10s L%3d")
+	Hp    = "  HP %18s "
+	Ap    = "  AP %18s "
+	Ep    = "  EP %18s "
+	//       012345678901234567
+	HpVal = " %3d/%3d"
 )
 
 func viewloop() {
-        
+
 	for {
-		
-                time.Sleep(3e7)
-                if MainWorld.InCombat() {
-                        a := MainWorld.GetSingleArena()
-                        c_self, _ := a.GetCombattant(0)
-                        c_other, _ := a.GetCombattant(1)
-                        
-                        var name string
-                        var l, e, hp, ap int
-                        var t_hp, v_hp, m_hp, e_curLvl, e_nextLvl, cur_e int
-                        var progress float
-                        var show, canLvl bool
-                        
-                        a.SyncAccess( func() {                                
-                                if show = c_self != nil; show {
-                                        c := c_self
-                                        name = c.GetName()
-                                        l = c.GetLevel()
-                                        e_curLvl, _ = c.GetExpForLevel( l )
-                                        e_nextLvl, canLvl = c.GetExpForLevel( l + 1 )
-                                        cur_e = c.GetExp()
-                                        t_hp = c.GetTimedHp()
-                                        v_hp = c.GetHp()
-                                        m_hp = c.GetMaxHp()
-                                        progress = c.GetSleepProgress()
-                                }
-                        } )
-                        
-                        bar_self:=fmt.Sprintf( Bar )
-                        name_self:=""
-                        hp_self:= ""
-                        ap_self:=""
-                        ep_self:=""
-                
-                        if show {
-                                //hp_val:=fmt.Sprintf( HpVal, v_hp, m_hp )
-                                hp = int( float( 18 * t_hp ) / float( m_hp ) + 0.99 )
-                                ap = int( 18.0 * progress + 0.5 )
-                                
-                                if canLvl {
-                                        e = int( float( 18 * ( cur_e - e_curLvl ) ) / float( e_nextLvl - e_curLvl ) + 0.99 )
-                                } else {
-                                        e = 18
-                                }
-                                
-                                name_self=fmt.Sprintf( Name, name, l )
-                                hp_self=fmt.Sprintf( Hp, fmt.Sprintf( "%s%s", strings.Repeat( "=", hp ), strings.Repeat( "-", 18 - hp ) ) )
-                                ap_self=fmt.Sprintf( Ap, fmt.Sprintf( "%s%s", strings.Repeat( "=", ap ), strings.Repeat( "-", 18 - ap ) ) )
-                                ep_self=fmt.Sprintf( Ep, fmt.Sprintf( "%s%s", strings.Repeat( "=", e ), strings.Repeat( "-", 18 - e ) ) )
-                                
-                        }
-                        
-                        a.SyncAccess( func() {
-                                if show = c_other != nil; show {
-                                        c := c_other
-                                        name = c.GetName()
-                                        l = c.GetLevel()
-                                        t_hp = c.GetTimedHp()
-                                        m_hp = c.GetMaxHp()
-                                        progress = c.GetSleepProgress()
-                                        
-                                }
-                        } )
-                        
-                        bar_other:=fmt.Sprintf( Bar )
-                        name_other:=""
-                        hp_other:= ""
-                        ap_other:=""
-                
-                        if show {
-                                hp = int( float( 18 * t_hp ) / float( m_hp ) + 0.99 )
-                                ap = int( 18.0 * progress + 0.5 )
-                                
-                                name_other=fmt.Sprintf( Name, name, l )
-                                hp_other=fmt.Sprintf( Hp, fmt.Sprintf( "%s%s", strings.Repeat( "=", hp ), strings.Repeat( "-", 18 - hp )  ) )
-                                ap_other=fmt.Sprintf( Ap, fmt.Sprintf( "%s%s", strings.Repeat( "=", ap ), strings.Repeat( "-", 18 - ap )  ) )
-                        }
-                        
-                        whole := strings.Split( fmt.Sprintf( Whole,
-                                                        name_other, 
-                                                        hp_other, 
-                                                        ap_other, 
-                                                        bar_other, 
-                                                        
-                                                        bar_self,
-                                                        name_self,
-                                                        hp_self,
-                                                        ap_self,
-                                                        ep_self,
-                                                ), "\n", -1 )
-                        
-                        for line, s := range whole {
-                                if s != "" { 
-                                        curses.Stdwin.Addstr( 1, 2+line, s, 0 )
-                                }
-                                
-                        }
-                        
-                        
-                }
-                curses.Stdwin.Refresh()
+
+		time.Sleep(3e7)
+		if MainWorld.InCombat() {
+			a := MainWorld.GetSingleArena()
+			c_self, _ := a.GetCombattant(0)
+			c_other, _ := a.GetCombattant(1)
+
+			var name string
+			var l, e, hp, ap int
+			var t_hp, v_hp, m_hp, e_curLvl, e_nextLvl, cur_e int
+			var progress float
+			var show, canLvl bool
+
+			a.SyncAccess(func() {
+				if show = c_self != nil; show {
+					c := c_self
+					name = c.GetName()
+					l = c.GetLevel()
+					e_curLvl, _ = c.GetExpForLevel(l)
+					e_nextLvl, canLvl = c.GetExpForLevel(l + 1)
+					cur_e = c.GetExp()
+					t_hp = c.GetTimedHp()
+					v_hp = c.GetHp()
+					m_hp = c.GetMaxHp()
+					progress = c.GetSleepProgress()
+				}
+			})
+
+			bar_self := fmt.Sprintf(Bar)
+			name_self := ""
+			hp_self := ""
+			ap_self := ""
+			ep_self := ""
+
+			if show {
+				//hp_val:=fmt.Sprintf( HpVal, v_hp, m_hp )
+				hp = int(float(18*t_hp)/float(m_hp) + 0.99)
+				ap = int(18.0*progress + 0.5)
+
+				if canLvl {
+					e = int(
+						float(18*(cur_e-e_curLvl))/
+							float(e_nextLvl-e_curLvl) + 0.99)
+				} else {
+					e = 18
+				}
+
+				name_self = fmt.Sprintf(Name, name, l)
+				hp_self = fmt.Sprintf(Hp, fmt.Sprintf("%s%s",
+					strings.Repeat("=", hp),
+					strings.Repeat("-", 18-hp)))
+				ap_self = fmt.Sprintf(Ap, fmt.Sprintf("%s%s",
+					strings.Repeat("=", ap),
+					strings.Repeat("-", 18-ap)))
+				ep_self = fmt.Sprintf(Ep, fmt.Sprintf("%s%s",
+					strings.Repeat("=", e),
+					strings.Repeat("-", 18-e)))
+
+			}
+
+			a.SyncAccess(func() {
+				if show = c_other != nil; show {
+					c := c_other
+					name = c.GetName()
+					l = c.GetLevel()
+					t_hp = c.GetTimedHp()
+					m_hp = c.GetMaxHp()
+					progress = c.GetSleepProgress()
+
+				}
+			})
+
+			bar_other := fmt.Sprintf(Bar)
+			name_other := ""
+			hp_other := ""
+			ap_other := ""
+
+			if show {
+				hp = int(float(18*t_hp)/float(m_hp) + 0.99)
+				ap = int(18.0*progress + 0.5)
+
+				name_other = fmt.Sprintf(Name, name, l)
+				hp_other = fmt.Sprintf(Hp, fmt.Sprintf("%s%s", strings.Repeat("=", hp), strings.Repeat("-", 18-hp)))
+				ap_other = fmt.Sprintf(Ap, fmt.Sprintf("%s%s", strings.Repeat("=", ap), strings.Repeat("-", 18-ap)))
+			}
+
+			whole := strings.Split(fmt.Sprintf(Whole,
+				name_other,
+				hp_other,
+				ap_other,
+				bar_other,
+
+				bar_self,
+				name_self,
+				hp_self,
+				ap_self,
+				ep_self,
+			),
+				"\n", -1)
+
+			for line, s := range whole {
+				if s != "" {
+					char.Print(2+line, 1, s)
+				}
+
+			}
+
+		}
+		char.Flush()
 
 	}
 }
@@ -229,29 +235,29 @@ func sleep(c Combattant, foo func()) {
 }
 
 const (
-        SUPER_EFFECTIVE = 2.0
-        INEFFECTIVE = 0.5
-        )
-        
+	SUPER_EFFECTIVE = 2.0
+	INEFFECTIVE     = 0.5
+)
+
 
 func main() {
 
-        testmode := true
+	testmode := true
 	Darkness := TestElement("Darkness")
 	Light := TestElement("Light")
 	Metal := TestElement("Metal")
 	Fire := TestElement("Fire")
 
-	Light.SetDamageMod(Metal, INEFFECTIVE )
-	Darkness.SetDamageMod(Metal, INEFFECTIVE )
-	Darkness.SetDamageMod(Light, SUPER_EFFECTIVE )
-        Fire.SetDamageMod(Metal, SUPER_EFFECTIVE )
-        //Metal.SetDamageMod(Darkness, SUPER_EFFECTIVE )
+	Light.SetDamageMod(Metal, INEFFECTIVE)
+	Darkness.SetDamageMod(Metal, INEFFECTIVE)
+	Darkness.SetDamageMod(Light, SUPER_EFFECTIVE)
+	Fire.SetDamageMod(Metal, SUPER_EFFECTIVE)
+	//Metal.SetDamageMod(Darkness, SUPER_EFFECTIVE )
 
-        //  80 => +8
-        //  90 => +9
-        // 100 => +10
-        
+	//  80 => +8
+	//  90 => +9
+	// 100 => +10
+
 	ava := TestCreature("Avatark",
 		25, 80, 45, 70,
 		12,
@@ -259,7 +265,7 @@ func main() {
 	)
 
 	fla := TestCreature("Flamex",
-		0, 5, 40, 175,
+		170, 5, 45, 0,
 		12,
 		Fire,
 	)
@@ -290,7 +296,7 @@ func main() {
 				fmt.Println(ava.GetStrength(), "!=", str)
 			}
 		})
-		
+
 	}
 
 	a := MainWorld.GetSingleArena()
@@ -332,12 +338,10 @@ func main() {
 
 		}
 
-		
-                
-                a.SetCombattant(0, fla_com)
+		a.SetCombattant(0, fla_com)
+
 		a.SetCombattant(1, ste_com)
 		a.SetCombattant(0, ava_com)
-		
 
 		if testmode {
 
@@ -363,26 +367,19 @@ func main() {
 		}
 	})
 
-	if win, err := curses.Initscr(); err == nil {
-		defer curses.Endwin()
-
-		curses.Noecho()
-		curses.Curs_set(curses.CURS_HIDE)
-		win.Keypad(true)
-
-	} else {
-		curses.Endwin()
-		fmt.Println("init failed")
-	}
-
-
-	curses.Stdwin.Addstr(0, 0, "Start?", 0)
-	curses.Stdwin.Refresh()
-        Get()
-        Get()
+	char.Start()
+	defer char.End()
+	char.Print(0, 0, "Start?")
+	char.Flush()
+	char.GetWithTimeout(5e9)
 
 	go func() {
-		for Get() != 'q' {}
+		time_c := time.Tick(1e8)
+		for _ = range time_c {
+			if char.GetLast() == 'q' {
+				break
+			}
+		}
 		mainCIn <- true
 		mainQuit <- true
 	}()
@@ -391,40 +388,44 @@ func main() {
 	c2, _ := a.GetCombattant(1)
 
 	var foo1, foo2 func()
-	
-        p1 := TestSpecPower( "Dark Ray", 30, 1.0, 3.0, Darkness )
-        p2 := TestPhysPower( "Metal Claw", 30, 1.0, 3.0, Metal )
-	
+
+	p1 := TestSpecPower("Dark Ray", 30, 1.0, 3.0, Darkness)
+	p2 := TestPhysPower("Metal Claw", 30, 1.0, 3.0, Metal)
+	p3 := TestPhysPower("Flame Fist", 20, 1.0, 2.0, Fire)
+
+	ava.AddPower(p1)
+	ste.AddPower(p2)
+	fla.AddPower(p3)
+
 	foo1 = func() {
 		MainWorld.PauseCombat(true)
-                
-                if c1.GetHp() > 0 {
-                        p1.Use()
 
-                        if c2.GetHp() > 0 {
-                                sleep(c1, foo1)
-                        } else {
-                                a.SetCombattant(1, nil)
-                        }
-                }
-        
-                
+		if c1.GetHp() > 0 {
+			c1.GetPowers()[0].Use()
+
+			if c2.GetHp() > 0 {
+				sleep(c1, foo1)
+			} else {
+				a.SetCombattant(1, nil)
+			}
+		}
+
 		MainWorld.PauseCombat(false)
 	}
-	
+
 	foo2 = func() {
 		MainWorld.PauseCombat(true)
-		
-                if c2.GetHp() > 0 {
-                        p2.Use()
-                        if c1.GetHp() > 0 {
-                                sleep(c2, foo2)
-                        } else {
-                                a.SetCombattant( 0, nil )
-                        }
-                }
-                
-                MainWorld.PauseCombat(false)
+
+		if c2.GetHp() > 0 {
+			c2.GetPowers()[0].Use()
+			if c1.GetHp() > 0 {
+				sleep(c2, foo2)
+			} else {
+				a.SetCombattant(0, nil)
+			}
+		}
+
+		MainWorld.PauseCombat(false)
 	}
 
 	if c1.SetSleepTime(a, 3e9) {

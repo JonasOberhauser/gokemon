@@ -58,6 +58,7 @@ func (p *attackpower) Use() {
 
                                 }
                         })
+                        
                 }
                 
         } else if MainWorld.InField() {
