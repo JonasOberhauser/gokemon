@@ -3,13 +3,13 @@ package main
 type Creature interface {
 	SetMaxHp(int) bool
 	GetMaxHp() int
-	
-        DealDamage(int, Element) int
-        HealDamage(int) int
-	
+
+	DealDamage(int, Element) int
+	HealDamage(int) int
+
 	GetHp() int
 	SetHp(int) bool
-	
+
 	GetStrength() int
 	GetAgility() int
 	GetVitality() int
@@ -19,19 +19,19 @@ type Creature interface {
 	SetAgility(int) bool
 	SetVitality(int) bool
 	SetEnergy(int) bool
-	
-        GetAccuracy() float
-        GetDefense() float
-        
-        SetAccuracy( float ) bool
-        SetDefense( float ) bool
+
+	GetAccuracy() float
+	GetDefense() float
+
+	SetAccuracy(float) bool
+	SetDefense(float) bool
 
 	GetName() string
 	SetName(string) bool
 
 	AddPower(Power) bool
-	GetPowers() [4]Power
-	SetPower(int, Power) bool
+	GetPowers() <-chan Power
+	ReplacePower(Power, Power) bool
 
 	GetExp() int
 	SetExp(int) bool
@@ -45,21 +45,21 @@ type Creature interface {
 	GetElementList() ElementList
 
 	BoxLevel(int) int
-        BoxHp(int) int
-        BoxStat(int) int
-        
-        BoxAccuracy(float) float
-        BoxDefense(float) float
-        SyncAccess(func())
+	BoxHp(int) int
+	BoxStat(int) int
+
+	BoxAccuracy(float) float
+	BoxDefense(float) float
+	SyncAccess(func())
 }
 
 const (
 	MaxStat  = 999
 	MaxHp    = 999
 	MaxLevel = 99
-	
+
 	MinAccuracy, MaxAccuracy = 0.5, 1.5
-	MinDefense, MaxDefense = 0, 0.75
+	MinDefense, MaxDefense   = 0, 0.75
 )
 
 
@@ -71,23 +71,23 @@ type testcreature struct {
 	name       string
 	exp_req    *[MaxLevel + 1]int
 	elems      ElementList
-        keyman     KeyMan
+	keyman     KeyMan
 }
 
 func TestCreature(name string, s, a, v, e int, lvl int, elems ...Element) Creature {
 	c := new(testcreature)
 	c.s, c.a, c.v, c.e = s, a, v, e
 	c.powers = [4]Power{nil, nil, nil, nil}
-	
-        c.exp_req = new([MaxLevel + 1]int)
-        c.name = name
-        c.elems = TestElementList(elems)
-        c.keyman = TestKeyMan()
-        
-	hp := c.BoxMaxHp( 5 + int(1.5*float(c.v+c.lvl)+0.2*float(c.s+c.a+c.e)) )
-	
+
+	c.exp_req = new([MaxLevel + 1]int)
+	c.name = name
+	c.elems = TestElementList(elems)
+	c.keyman = TestKeyMan()
+
+	hp := c.BoxMaxHp(5 + int(1.5*float(c.v+c.lvl)+0.2*float(c.s+c.a+c.e)))
+
 	c.SetMaxHp(hp)
-        c.SetLevel(lvl)
+	c.SetLevel(lvl)
 	return c
 }
 
@@ -108,22 +108,22 @@ func (c *testcreature) SetMaxHp(maxhp int) bool {
 }
 
 func (c *testcreature) DealDamage(dam int, elemType Element) int {
-        dam_real := float(dam)                               
-        for e := range c.elems.Iter() {                         
-                dam_real *= elemType.GetDamageMod(e)            
-        }                                                          
-        hp := c.BoxHp( c.GetHp() - int(dam_real) )
-        dam = hp - c.GetHp()
-        c.SetHp(hp)
-        return dam
+	dam_real := float(dam)
+	for e := range c.elems.Iter() {
+		dam_real *= elemType.GetDamageMod(e)
+	}
+	hp := c.BoxHp(c.GetHp() - int(dam_real))
+	dam = hp - c.GetHp()
+	c.SetHp(hp)
+	return dam
 }
 
 func (c *testcreature) HealDamage(dam int) int {
-        hp := c.BoxHp( c.GetHp() + dam )
-        dam = hp - c.GetHp()
-        c.SetHp(hp)
-        return dam
-}                            
+	hp := c.BoxHp(c.GetHp() + dam)
+	dam = hp - c.GetHp()
+	c.SetHp(hp)
+	return dam
+}
 
 
 func (c *testcreature) GetHp() int {
@@ -179,18 +179,18 @@ func (c *testcreature) SetEnergy(e int) bool {
 
 
 func (c *testcreature) GetAccuracy() float {
-        return 1.0
+	return 1.0
 }
 func (c *testcreature) GetDefense() float {
-        return 0.5
+	return 0.5
 }
 
 
-func (c *testcreature) SetAccuracy( acc float ) bool {
-        return false
+func (c *testcreature) SetAccuracy(acc float) bool {
+	return false
 }
-func (c *testcreature) SetDefense( def float ) bool {
-        return false
+func (c *testcreature) SetDefense(def float) bool {
+	return false
 }
 
 
@@ -209,29 +209,57 @@ func (c *testcreature) SetName(name string) bool {
 	return false
 }
 
+func (c *testcreature) setPower(id int, p Power) bool {
+	c.powers[id] = p // Just override anything
+	return true
+}
 
-func (c *testcreature) AddPower(newp Power) bool {
+func (c *testcreature) setPowerBoxed(id int, p Power) bool {
+
+	if old := c.powers[id]; old == nil || old.Unlearnable() {
+		c.powers[id] = p
+		return true
+	}
+	return false
+}
+
+func (c *testcreature) AddPower(p Power) bool {
+	return c.ReplacePower(nil, p)
+}
+
+func (c *testcreature) GetPowers() <-chan Power {
+	ch := make(chan Power)
+	go func() {
+		for _, p := range c.powers {
+			ch <- p
+		}
+		close(ch)
+	}()
+
+	return ch
+}
+
+func (c *testcreature) ReplacePower(old, replacement Power) bool {
+
 	for id, p := range c.powers {
-		if p == nil && c.SetPower(id, newp) {
+		if p == old && c.setPowerBoxed(id, replacement) {
 			return true
 		}
 	}
+
 	return false
 }
 
-func (c *testcreature) GetPowers() [4]Power {
-	return c.powers
-}
-func (c *testcreature) SetPower(id int, p Power) bool {
-	if id >= 0 && id <= 3 {
-		if c.powers[id] == nil || c.powers[id].Unlearnable() {
-			c.powers[id] = p
+func (c *testcreature) ReplacePowerForced(old, replacement Power) bool {
+
+	for id, p := range c.powers {
+		if p == old && c.setPower(id, replacement) {
 			return true
 		}
 	}
+
 	return false
 }
-
 
 func (c *testcreature) setExp(exp int) {
 	c.exp = exp
@@ -283,27 +311,27 @@ func (c *testcreature) GetExpForLevel(lvl int) (int, bool) {
 }
 
 func (c *testcreature) GetLevelForExp(exp int) (int, bool) {
-        if exp >= 0 {
-                lvl := MaxLevel / 2
-                diff := lvl / 2
+	if exp >= 0 {
+		lvl := MaxLevel / 2
+		diff := lvl / 2
 
-                for diff > 0 {
-                        switch exp_lower, _ := c.GetExpForLevel(lvl); {
-                        case exp_lower >= exp:
-                                lvl -= diff
-                        case exp_lower <= exp:
-                                exp_upper, _ := c.GetExpForLevel(lvl + 1)
-                                if exp <= exp_upper {
-                                        return lvl, true
-                                }
-                                lvl += diff
-                        }
+		for diff > 0 {
+			switch exp_lower, _ := c.GetExpForLevel(lvl); {
+			case exp_lower >= exp:
+				lvl -= diff
+			case exp_lower <= exp:
+				exp_upper, _ := c.GetExpForLevel(lvl + 1)
+				if exp <= exp_upper {
+					return lvl, true
+				}
+				lvl += diff
+			}
 
-                        diff /= 2
-                }
-        }
-        return 0, false
-        
+			diff /= 2
+		}
+	}
+	return 0, false
+
 }
 
 
@@ -313,13 +341,13 @@ func (c *testcreature) GetElementList() ElementList {
 
 
 func (c *testcreature) BoxHp(hp int) int {
-        switch {
-        case hp < 0:
-                hp = 0
-        case hp > c.GetMaxHp():
-                hp = c.GetMaxHp()
-        }
-        return hp
+	switch {
+	case hp < 0:
+		hp = 0
+	case hp > c.GetMaxHp():
+		hp = c.GetMaxHp()
+	}
+	return hp
 }
 
 func (c *testcreature) BoxMaxHp(maxhp int) int {
@@ -341,41 +369,38 @@ func (c *testcreature) BoxLevel(lvl int) int {
 	return lvl
 }
 func (c *testcreature) BoxStat(stat int) int {
-        switch {
-        case stat < 1:
-                stat = 1
-        case stat > MaxStat:
-                stat = MaxStat
-        }
-        return stat
+	switch {
+	case stat < 1:
+		stat = 1
+	case stat > MaxStat:
+		stat = MaxStat
+	}
+	return stat
 }
 
-func (c *testcreature) BoxAccuracy(acc float) float{
-        switch {
-        case acc < MinAccuracy:
-                acc = MinAccuracy
-        case acc > MaxAccuracy:
-                acc = MaxAccuracy
-        }
-        return acc
+func (c *testcreature) BoxAccuracy(acc float) float {
+	switch {
+	case acc < MinAccuracy:
+		acc = MinAccuracy
+	case acc > MaxAccuracy:
+		acc = MaxAccuracy
+	}
+	return acc
 }
 
 func (c *testcreature) BoxDefense(def float) float {
-        switch {
-        case def < MinDefense:
-                def = MinDefense
-        case def > MaxDefense:
-                def = MaxDefense
-        }
-        return def
+	switch {
+	case def < MinDefense:
+		def = MinDefense
+	case def > MaxDefense:
+		def = MaxDefense
+	}
+	return def
 }
 
-func (c *testcreature) SyncAccess( foo func() ) {
-        c.keyman.Atomic( foo )
+func (c *testcreature) SyncAccess(foo func()) {
+	c.keyman.Atomic(foo)
 }
-
-
-
 
 
 /*

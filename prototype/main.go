@@ -6,6 +6,7 @@ import (
 	"strings"
 	"rand"
 	"char"
+	"curses"
 )
 
 var (
@@ -100,6 +101,11 @@ var (
 	HpVal = " %3d/%3d"
 )
 
+var (
+	CombatWin curses.Window
+	CombatPan curses.Panel
+)
+
 func viewloop() {
 
 	for {
@@ -188,8 +194,8 @@ func viewloop() {
 				hp_other = fmt.Sprintf(Hp, fmt.Sprintf("%s%s", strings.Repeat("=", hp), strings.Repeat("-", 18-hp)))
 				ap_other = fmt.Sprintf(Ap, fmt.Sprintf("%s%s", strings.Repeat("=", ap), strings.Repeat("-", 18-ap)))
 			}
-
-			whole := strings.Split(fmt.Sprintf(Whole,
+	
+			curses.Stdwin.AddstrAlign( 0, 1, Whole, curses.A_NORMAL, 
 				name_other,
 				hp_other,
 				ap_other,
@@ -200,18 +206,11 @@ func viewloop() {
 				hp_self,
 				ap_self,
 				ep_self,
-			),
-				"\n", -1)
-
-			for line, s := range whole {
-				if s != "" {
-					char.Print(2+line, 1, s)
-				}
-
-			}
+			)
 
 		}
-		char.Flush()
+		curses.UpdatePanels()
+		curses.DoUpdate()
 
 	}
 }
@@ -366,11 +365,19 @@ func main() {
 
 		}
 	})
-
+	
+	if _, err := curses.Initscr(); err != nil {
+		panic("Window could not be initialised")
+	}
+	
 	char.Start()
-	defer char.End()
-	char.Print(0, 0, "Start?")
-	char.Flush()
+	defer curses.Endwin()
+	curses.Stdwin.Addstr(0, 0, "Start?", curses.A_NORMAL )
+	
+	curses.Noecho()
+	curses.Curs_set(curses.CURS_HIDE)
+	curses.Stdwin.Keypad(true)
+	curses.Stdwin.Refresh()
 	char.GetWithTimeout(5e9)
 
 	go func() {
@@ -401,8 +408,11 @@ func main() {
 		MainWorld.PauseCombat(true)
 
 		if c1.GetHp() > 0 {
-			c1.GetPowers()[0].Use()
-
+			for p := range c1.GetPowers() {
+				if p != nil {
+					p.Use()
+				}
+			}
 			if c2.GetHp() > 0 {
 				sleep(c1, foo1)
 			} else {
@@ -417,7 +427,11 @@ func main() {
 		MainWorld.PauseCombat(true)
 
 		if c2.GetHp() > 0 {
-			c2.GetPowers()[0].Use()
+			for p := range c1.GetPowers() {
+				if p != nil {
+					p.Use()
+				}
+			}
 			if c1.GetHp() > 0 {
 				sleep(c2, foo2)
 			} else {

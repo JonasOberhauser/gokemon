@@ -1,4 +1,3 @@
-#include char/Makefile
 include $(GOROOT)/src/Make.$(GOARCH)
 
 TARG=prototype2

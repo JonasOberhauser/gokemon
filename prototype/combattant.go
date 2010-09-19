@@ -33,7 +33,7 @@ type Combattant interface {
 	SetHp(int) bool
 	GetTimedHp() int
 
-	GetPowers() [4]Power
+	GetPowers() <-chan Power
 	GetElementList() ElementList
 
 	GetStrength() int

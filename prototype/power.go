@@ -1,6 +1,8 @@
 package main
 
-import "rand"
+import (
+	"rand"
+)
 
 type Power interface {
         GetName() string
