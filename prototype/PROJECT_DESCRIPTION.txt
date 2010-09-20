@@ -1,0 +1,299 @@
+#-Gokemon-------------------------#
+| Gokemon is a game engine        |
+| prototype written in go for a   |
+| real-time combat system and     |
+| 2D games using that system.     |
+#---------------------------------#
+
+#-Features------------------------#
+| Gokemon features a rich,        |
+| real-time combat system that    |
+| has its roots within the        |
+| successfull Pokemon (TM) combat |
+| system.                         |
+| It also features a PNG2Map      |
+| Parser that allows to parse 2D  |
+| Maps from PNGs (coded in ruby), |
+| as well as a framework for      |
+| linking such maps together to a |
+| simple game.                    |
+#---------------------------------#
+
+#-Combat System-------------------#
+| The gokemon combat system is    |
+| highly flexible. Currently      |
+| planned are two modes, but      |
+| other modes should be able to   |
+| be implemented easily.          |
+| The combat system is heavily    |
+| based upon the gokemon          |
+| creature system                 |
+#---------------------------------#
+
+#-Gokemon Creature System---------#
+| In order to meet new flexible,  |
+| yet powerful combat mechanics   |
+| that support innovative         |
+| strategy and combat tactics, a  |
+| new sats system was invented.   |
+| This new system is based upon   |
+| the five-pillar SAVED principle:|
+|  * Strength                     |
+|  * Agility                      |
+|  * Vitality                     |
+|  * Energy                       |
+|  * Determination/Discipline     |
+| These five primary attributes   |
+| determine the overall combat    |
+| capabilities of every single    |
+| creature.                       |
+| While progressing in experience,|
+| creatures will strongly train   |
+| in Strength, Agility, Vitality  |
+| and Energy, depending on their  |
+| individual efforts.             |
+| Determination/Discipline can    |
+| only slightly be modified by    |
+| progressing, since there is no  |
+| direct way to train this        |
+| attribute in combat.            |
+| The distribution of these       |
+| attributes and the rate at      |
+| which they are trained, however,|
+| are determined by the           |
+| creature's elemental types and  |
+| natures.                        |
+#---------------------------------#
+
+#-Strength-----------------------#
+| Creatures with a high strength |
+| inflict more physical damage.  |
+| Some powers require a high     |
+| strength to be learnt.         |
+#--------------------------------#
+
+#-Agility------------------------#
+| Creatures with a high agility  |
+| can attack more frequently.    |
+| Some powers require a high     |
+| agility to be learnt.          |
+#--------------------------------#
+
+#-Vitality-----------------------#
+| Creatures with a high vitality |
+| are less vulnerable.           |
+| Some powers require a high     |
+| vitality to be learnt.         |
+#--------------------------------#
+
+#-Energy-------------------------#
+| Creatures with a high strength |
+| inflict more energetic damage. |
+| Some powers require a high     |
+| energy to be learnt.           |
+#--------------------------------#
+
+#-Determination/Discipline-------#
+| Creatures with a high d/d      |
+| can progress much faster.      |
+| Some powers require a high     |
+| d/d to learn and master.       |
+#--------------------------------#
+
+#-Elemental Types-----------------#
+| Elemental types offer           |
+| different natures, as well as   |
+| modifying them to some extent.  |
+| This modification can either be |
+| beneficial or maleficial, both  |
+| on an attribute and a nature    |
+| level.                          |
+| Many powers are type-bound, and |
+| can only be learnt by their     |
+| respective types.               |
+#---------------------------------#
+
+#-Natures-------------------------#
+| Natures strongly effect         |
+| attribute distribution, and are |
+| only slightly influenced by     |
+| elemental types.                |
+| Many powers are nature-bound,   |
+| and can only be learnt by their |
+| respective types.               |
+#---------------------------------#
+
+#-Powers--------------------------#
+| The second factor for combat    |
+| capability of a creature are    |
+| its powers. Powers constitute   |
+| in-combat abilities of the      |
+| creature (while some powers     |
+| can also be used outside of     |
+| battle). Powers are usually     |
+| defensive or offensive in       |
+| nature, supporting allies or    |
+| harming foes.                   |
+| While progressing in level or   |
+| attributes, a creature may      |
+| access new powers from its      |
+| powerset.                       |
+#---------------------------------#
+
+#-Hidden Powers-------------------#
+| Hidden powers are powers        |
+| inherent to a creature itself.  |
+| It is not accessible during     |
+| combat, but may assist trainers |
+| outside thereof.                |
+| Such powers could be the        |
+| ability to swim, fly, cut trees,|
+| transport heavy stuff and       |
+| similar.                        |
+| Hidden powers can be used if    |
+| they are within the unit's      |
+| powerset and if their           |
+| requirements are met.           |
+#---------------------------------#
+
+#-Powerset------------------------#
+| A creature's powerset is        |
+| determined by the elemental     |
+| types and natures of that       |
+| creature. The powerset, hence,  |
+| can be rather large: The amount |
+| of accessible powers,  however, |
+| is much lower.                  |
+| While progressing in level, as  |
+| well as attributes, new powers  |
+| from the powerset become        |
+| available and may replace older |
+| abilities.                      |
+| The powerset can often be       |
+| enlarged by fusing with other   |
+| creatures from other types or   |
+| natures.                        |   
+#---------------------------------#
+
+#-Merging Creatures---------------#
+| Two creatures can often be      |
+| merged into one, resulting in a |
+| more powerful creature or a     |
+| larger powerset.                |
+| There are two ways to merge, by |
+| Fusion and by Absorption.       |
+#---------------------------------# 
+
+#-Fusion--------------------------#
+| In order to fuse creatures, the |
+| following conditions must be    |
+| met:                            |
+|  * Creature A's types must be   |
+|    Supported by B's natures     |
+|  * Creature B's types must be   |
+|    Supported by A's natures     |
+|  * The sum of A's types and B's |
+|    types may not exceed two     |
+|    (only different types count) |
+|  * The sum of A's natures and   |
+|    B's natures may not exceed   |
+|    two (only different natures  | 
+|    count)                       |
+|  * A's nature and B's nature    |
+|    must not conflict            | 
+|  * A's types or natures must    |
+|    differ from B's types or     |
+|    natures, respectively        | 
+| If all of these conditions are  |
+| met, a new creature can         |
+| successfully be fused from A    |
+| and B, which will have all of   |
+| A's and B's types and natures,  |
+| resulting in their shared       |
+| powerset. Possibly, a couple of |
+| special powers that can only be |
+| learnt by special type or       |
+| nature combinations may also be |
+| added.                          |
+| When the natures are different, |
+| the more dominant nature will   |
+| determine the progress of the   |
+| new creature.                   |
+| When the natures are equal,     |
+| however, the more experienced   |
+| creature will determine the     |
+| new creature's progress.        |
+| Upon fusing, the trainer may    |
+| choose which abilities to       |
+| transfer to the new creature.   |
+#---------------------------------#
+
+#-Absorption----------------------#
+| A creature A may absorb a       |
+| creature B if the following     |
+| conditiones are met:            |
+|  * Creature A shares type or    |
+|    shares nature with B         |
+|  * B has not progressed         |
+|    further than A               |
+|  * A has absorbed fewer other   |
+|    creatures than its current   |
+|    progress allows              |
+|    (one creature per level)     | 
+| When the absorption can be      |
+| fulfilled successfully, A will  |
+| slightly progress, as well as   |
+| slightly advance in attributes. |
+| The advancement depends on the  |
+| distribution of attributes on B.|
+| In addition to this, A may      |
+| inherit any Powers that B       |
+| possessed, unless they are      |
+| hidden powers.                  |
+| This allows creatures to        |
+| relearn old abilities, but also |
+| allows them to learn abilities  |
+| they could not learn yet due to |
+| their attributes,type or nature.|                   |
+#---------------------------------#
+ 
+#-Standard Combat Modes-----------#
+| The standard modes of the       |
+| combat system are fatigue based |
+| and stamina based combat,       |
+| respectively.                   |
+#---------------------------------#
+
+#-Fatigue Based Combat------------#
+| In fatigue based combat, every  |
+| in-combat action a creature (or |
+| the trainer) may perform will   |
+| fatigue the active creature,    |
+| immobilizing it until the       |
+| fatigue has depleted.           |
+| Creatures regenerate over time, |
+| and those with low agility will |
+| take longer to do so completely.|
+| The FBC is a rather turn-based  |
+| approach to real time combat,   |
+| and allows strategical combat.  |
+#---------------------------------#
+
+#-Stamina Based Combat------------#
+| In stamina based combat,        |
+| creatures can perform in-combat |
+| actions all the time. Doing so, |
+| however, results in a stamina   |
+| penalty. The lower the stamina, |
+| the less effective actions are. |
+| Stamina regenerates quickly     |
+| over time, but a low agility    |
+| value will result in a slower   |
+| stamina regeneration.           |
+| The SBC is an action-oriented   |
+| approach to real time combat.   |
+| It allows a wide range of moves,|
+| strongly based on action and    |
+| adequate reaction.              |
+#---------------------------------#
+
